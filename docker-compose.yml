@@ -1,0 +1,31 @@
+version: '3'
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    volumes:
+      - esdata:/usr/share/elasticsearch/data  # Volumen para persistencia de datos
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.13.0
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.13.0
+    command: filebeat -e -strict.perms=false
+    volumes:
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:rw
+      - ./logs/dummy_logs.json:/usr/share/filebeat/dummy_logs.json:rw
+      # Asegúrate de definir correctamente este volumen si deseas recolectar logs de Docker
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+
+volumes:
+  esdata:
+    driver: local
